@@ -14,12 +14,12 @@ def responder():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer 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",
         "Content-Type": "application/json"
     }
 
     data = {
-        "model": "nousresearch/deepseek-llama-3-8b",
+        "model": "mistralai/mistral-7b-instruct",
         "messages": [
             {"role": "user", "content": msg}
         ]
@@ -27,16 +27,16 @@ def responder():
 
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-        data = response.json()
-
-        resposta = data.get("choices", [{}])[0].get("message", {}).get("content", None)
-
-        if not resposta:
-            raise Exception("Resposta vazia da IA.")
-
-        return jsonify({"resposta": resposta})
-
+        response.raise_for_status()
+        resposta_data = response.json()
+        if "choices" in resposta_data and len(resposta_data["choices"]) > 0:
+            resposta_texto = resposta_data["choices"][0]["message"]["content"]
+        else:
+            resposta_texto = "❌ Erro: Resposta da IA está vazia."
     except Exception as e:
-        return jsonify({"resposta": f"❌ Erro ao obter resposta da IA: {str(e)}"})
+        resposta_texto = f"❌ Erro ao obter resposta da IA: {str(e)}"
 
+    return jsonify({"resposta": resposta_texto})
+
+# Inicia o servidor Flask
 app.run(host='0.0.0.0', port=3000)
