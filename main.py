@@ -3,12 +3,10 @@ import requests
 
 app = Flask(__name__)
 
-# Rota de teste
 @app.route('/')
 def home():
     return "ZapAgent IA está online e funcional!"
 
-# Rota de resposta para o bot do WhatsApp
 @app.route('/responder', methods=['GET'])
 def responder():
     msg = request.args.get('msg', '')
@@ -21,7 +19,7 @@ def responder():
     }
 
     data = {
-        "model": "nousresearch/deepseek-llama-3-8b",  # ou outro modelo gratuito que preferires
+        "model": "nousresearch/deepseek-llama-3-8b",
         "messages": [
             {"role": "user", "content": msg}
         ]
@@ -29,11 +27,16 @@ def responder():
 
     try:
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-        resposta = response.json()["choices"][0]["message"]["content"]
+        data = response.json()
+
+        resposta = data.get("choices", [{}])[0].get("message", {}).get("content", None)
+
+        if not resposta:
+            raise Exception("Resposta vazia da IA.")
+
+        return jsonify({"resposta": resposta})
+
     except Exception as e:
-        resposta = f"Erro ao obter resposta da IA: {str(e)}"
+        return jsonify({"resposta": f"❌ Erro ao obter resposta da IA: {str(e)}"})
 
-    return jsonify({"resposta": resposta})
-
-# Iniciar o servidor Flask no Replit
 app.run(host='0.0.0.0', port=3000)
