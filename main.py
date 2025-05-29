@@ -1,15 +1,39 @@
+# ------------------------
+# ✅ main.py (API em Flask)
+# ------------------------
+
 from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
 
+# Simulador de "banco de dados" de prompts personalizados
+PROMPTS = {}
+
 @app.route('/')
 def home():
     return "ZapAgent IA está online e funcional!"
 
+# Endpoint para salvar prompt personalizado por número
+@app.route('/set_prompt', methods=['POST'])
+def set_prompt():
+    data = request.get_json()
+    numero = data.get('numero')
+    prompt = data.get('prompt')
+
+    if not numero or not prompt:
+        return jsonify({"erro": "Número e prompt são obrigatórios."}), 400
+
+    PROMPTS[numero] = prompt
+    return jsonify({"mensagem": "✅ Prompt salvo com sucesso!"})
+
+# Endpoint para responder mensagens
 @app.route('/responder', methods=['GET'])
 def responder():
     msg = request.args.get('msg', '')
+    numero = request.args.get('numero', '')
+    prompt_base = PROMPTS.get(numero, '')
+
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
@@ -21,6 +45,7 @@ def responder():
     data = {
         "model": "mistralai/mistral-7b-instruct",
         "messages": [
+            {"role": "system", "content": prompt_base},
             {"role": "user", "content": msg}
         ]
     }
@@ -38,5 +63,5 @@ def responder():
 
     return jsonify({"resposta": resposta_texto})
 
-# Inicia o servidor Flask
+# Inicia o servidor Flask no Replit ou Render
 app.run(host='0.0.0.0', port=3000)
