@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
-CORS(app)  # Permite acesso de domínios externos
 
 @app.route('/')
 def home():
@@ -16,12 +14,14 @@ def responder():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
     headers = {
-        "Authorization": "Bearer sk-or-v1-1cf349090b84116bbd7995476201c265d7c6682e518e94acfac504636f0a2c6",
-        "Content-Type": "application/json"
+        "Authorization": "Bearer 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",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://zapagentai.com",  # opcional
+        "X-Title": "ZapAgent AI"
     }
 
     data = {
-        "model": "openchat/openchat-3.5-0106",
+        "model": "nousresearch/deephermes-3-llama-3-8b-preview:free",
         "messages": [
             {"role": "user", "content": msg}
         ]
@@ -40,4 +40,5 @@ def responder():
 
     return jsonify({"resposta": resposta_texto})
 
-app.run(host='0.0.0.0', port=3000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=3000)
