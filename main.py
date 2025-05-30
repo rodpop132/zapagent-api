@@ -3,7 +3,7 @@ from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
-CORS(app)  # Permite acesso externo
+CORS(app)  # Permite acesso de domínios externos
 
 @app.route('/')
 def home():
@@ -16,12 +16,12 @@ def responder():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": "Bearer sk-or-v1-1cf349090b84116bbd7995476201c265d7c6682e518e94acfac504636f0a2c6",
         "Content-Type": "application/json"
     }
 
     data = {
-        "model": "openvlab/internvl-2-34b:free",  # Novo modelo gratuito
+        "model": "openchat/openchat-3.5-0106",
         "messages": [
             {"role": "user", "content": msg}
         ]
