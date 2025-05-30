@@ -21,7 +21,7 @@ def responder():
     }
 
     data = {
-        "model": "mistralai/mistral-7b-instruct:free",
+        "model": "openvlab/internvl-2-34b:free",  # Novo modelo gratuito
         "messages": [
             {"role": "user", "content": msg}
         ]
