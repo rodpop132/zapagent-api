@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -13,10 +14,14 @@ def responder():
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
+    api_key = os.getenv("OPENROUTER_API_KEY")
+
+    if not api_key:
+        return jsonify({"resposta": "❌ API Key não configurada no ambiente."})
+
     headers = {
-        "Authorization": "Bearer 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",
+        "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://zapagentai.com",  # opcional
         "X-Title": "ZapAgent AI"
     }
 
@@ -40,5 +45,5 @@ def responder():
 
     return jsonify({"resposta": resposta_texto})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000)
+# Inicia o servidor Flask
+app.run(host='0.0.0.0', port=3000)
