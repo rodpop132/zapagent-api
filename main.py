@@ -14,15 +14,13 @@ def responder():
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
-    api_key = os.getenv("OPENROUTER_API_KEY")
-
-    if not api_key:
-        return jsonify({"resposta": "❌ API Key não configurada no ambiente."})
+    api_key = os.getenv("OPENROUTER_API_KEY")  # Correto para o Render
 
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "X-Title": "ZapAgent AI"
+        "HTTP-Referer": "https://zapagent-ai.lovable.site",  # opcional
+        "X-Title": "ZapAgent AI"  # opcional
     }
 
     data = {
@@ -45,5 +43,4 @@ def responder():
 
     return jsonify({"resposta": resposta_texto})
 
-# Inicia o servidor Flask
 app.run(host='0.0.0.0', port=3000)
