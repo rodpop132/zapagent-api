@@ -1,46 +1,46 @@
-from flask import Flask, request, jsonify
-import requests
-import os
+from flask import Flask, request, jsonify import requests import os
 
-app = Flask(__name__)
+app = Flask(name)
 
-@app.route('/')
-def home():
-    return "ZapAgent IA está online e funcional!"
+Endpoint de verificação simples
 
-@app.route('/responder', methods=['GET'])
-def responder():
-    msg = request.args.get('msg', '')
-    if not msg:
-        return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
+def home(): return "ZapAgent AI está online!"
 
-    api_key = os.getenv("OPENROUTER_API_KEY")  # Correto para o Render
+@app.route('/') def index(): return home()
 
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://zapagent-ai.lovable.site",  # opcional
-        "X-Title": "ZapAgent AI"  # opcional
-    }
+Endpoint principal da IA
 
-    data = {
-        "model": "nousresearch/deephermes-3-llama-3-8b-preview:free",
-        "messages": [
-            {"role": "user", "content": msg}
-        ]
-    }
+@app.route('/responder', methods=['GET']) def responder(): msg = request.args.get('msg', '') if not msg: return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
-    try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-        response.raise_for_status()
-        resposta_data = response.json()
-        if "choices" in resposta_data and len(resposta_data["choices"]) > 0:
-            resposta_texto = resposta_data["choices"][0]["message"]["content"]
-        else:
-            resposta_texto = "❌ Erro: Resposta da IA está vazia."
-    except Exception as e:
-        resposta_texto = f"❌ Erro ao obter resposta da IA: {str(e)}"
+api_key = os.getenv("OPENROUTER_API_KEY")
+if not api_key:
+    return jsonify({"resposta": "❌ API KEY não configurada."})
 
-    return jsonify({"resposta": resposta_texto})
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json",
+    "HTTP-Referer": "https://zapagent-ai-builder.lovable.app",
+    "X-Title": "ZapAgent AI"
+}
 
-app.run(host='0.0.0.0', port=3000)
+data = {
+    "model": "nousresearch/deephermes-3-llama-3-8b-preview:free",
+    "messages": [
+        {"role": "user", "content": msg}
+    ]
+}
+
+try:
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+    response.raise_for_status()
+    resposta_data = response.json()
+    resposta_texto = resposta_data["choices"][0]["message"]["content"] if resposta_data.get("choices") else "❌ Erro: Resposta da IA vazia."
+except Exception as e:
+    resposta_texto = f"❌ Erro ao obter resposta da IA: {str(e)}"
+
+return jsonify({"resposta": resposta_texto})
+
+Inicia o servidor
+
+if name == 'main': app.run(host='0.0.0.0', port=3000)
+
