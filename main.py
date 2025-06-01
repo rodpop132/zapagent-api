@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "✅ ZapAgent IA está online!"
+    return "ZapAgent IA está online e funcional!"
 
 @app.route('/responder', methods=['GET'])
 def responder():
@@ -14,16 +14,13 @@ def responder():
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
-    # API KEY segura nas variáveis de ambiente do Render
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key:
-        return jsonify({"resposta": "❌ Chave de API não encontrada."})
+    api_key = os.environ.get('OPENROUTER_API_KEY')
 
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://zapagent-ai-builder.lovable.app",  # ou a página onde está o frontend
-        "X-Title": "ZapAgent IA"
+        "HTTP-Referer": "https://zapagent-ai-builder.lovable.app",
+        "X-Title": "ZapAgent AI"
     }
 
     data = {
@@ -37,13 +34,13 @@ def responder():
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
         response.raise_for_status()
         resposta_data = response.json()
-        resposta_texto = resposta_data["choices"][0]["message"]["content"]
+        if "choices" in resposta_data and len(resposta_data["choices"]) > 0:
+            resposta_texto = resposta_data["choices"][0]["message"]["content"]
+        else:
+            resposta_texto = "❌ Erro: Resposta da IA está vazia."
     except Exception as e:
         resposta_texto = f"❌ Erro ao obter resposta da IA: {str(e)}"
 
     return jsonify({"resposta": resposta_texto})
 
-# Iniciar servidor Flask
-if __name__ == "__main__":
-    print("✅ Endpoint de verificação simples")
-    app.run(host='0.0.0.0', port=3000)
+app.run(host='0.0.0.0', port=3000)
