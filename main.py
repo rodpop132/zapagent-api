@@ -4,11 +4,14 @@ import os
 
 app = Flask(__name__)
 
+# Memória e histórico por agente
+memoria_agentes = {}   # { numero: última mensagem }
+historico_agentes = {} # { numero: [mensagens] }
+
 @app.route('/')
 def home():
     return "ZapAgent IA está online e funcional!"
 
-# ✅ GET simples para testes
 @app.route('/responder', methods=['GET'])
 def responder_get():
     msg = request.args.get('msg', '')
@@ -16,7 +19,6 @@ def responder_get():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg)
 
-# ✅ POST simples para testes
 @app.route('/responder', methods=['POST'])
 def responder_post():
     data = request.get_json()
@@ -26,7 +28,6 @@ def responder_post():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg, prompt)
 
-# ✅ POST por número (recomendado para múltiplos agentes)
 @app.route('/responder/<numero>', methods=['POST'])
 def responder_por_numero(numero):
     data = request.get_json()
@@ -34,11 +35,31 @@ def responder_por_numero(numero):
     prompt = data.get('prompt', 'Você é um agente inteligente de atendimento.')
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
-    return gerar_resposta(msg, prompt)
 
-# 🔁 Função compartilhada
+    # salvar memória e histórico
+    memoria_agentes[numero] = msg
+    historico_agentes.setdefault(numero, []).append({"user": msg})
+    
+    resposta_json = gerar_resposta(msg, prompt)
+    resposta_texto = resposta_json.json.get("resposta", "")
+    historico_agentes[numero].append({"bot": resposta_texto})
+    
+    return resposta_json
+
+# 📊 Status do agente
+@app.route('/status/<numero>', methods=['GET'])
+def status_agente(numero):
+    memoria = memoria_agentes.get(numero, '')
+    historico = historico_agentes.get(numero, [])
+    return jsonify({
+        "memoria_ultima_mensagem": memoria,
+        "conversas": historico[-10:]  # últimos 10 diálogos
+    })
+
 def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento."):
     api_key = os.environ.get('OPENROUTER_API_KEY')
+    if not api_key:
+        return jsonify({"resposta": "❌ Chave da OpenRouter não definida."})
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -68,6 +89,5 @@ def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento.")
 
     return jsonify({"resposta": resposta_texto})
 
-# 🌐 Iniciar servidor Flask
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
