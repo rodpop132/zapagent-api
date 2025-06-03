@@ -8,7 +8,7 @@ app = Flask(__name__)
 def home():
     return "ZapAgent IA está online e funcional!"
 
-# ✅ GET: responder via parâmetro msg
+# ✅ GET simples para testes
 @app.route('/responder', methods=['GET'])
 def responder_get():
     msg = request.args.get('msg', '')
@@ -16,17 +16,28 @@ def responder_get():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg)
 
-# ✅ POST: responder via JSON { "msg": "..." }
+# ✅ POST simples para testes
 @app.route('/responder', methods=['POST'])
 def responder_post():
     data = request.get_json()
     msg = data.get('msg', '')
+    prompt = data.get('prompt', 'Você é um agente inteligente de atendimento.')
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
-    return gerar_resposta(msg)
+    return gerar_resposta(msg, prompt)
+
+# ✅ POST por número (recomendado para múltiplos agentes)
+@app.route('/responder/<numero>', methods=['POST'])
+def responder_por_numero(numero):
+    data = request.get_json()
+    msg = data.get('msg', '')
+    prompt = data.get('prompt', 'Você é um agente inteligente de atendimento.')
+    if not msg:
+        return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
+    return gerar_resposta(msg, prompt)
 
 # 🔁 Função compartilhada
-def gerar_resposta(msg):
+def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento."):
     api_key = os.environ.get('OPENROUTER_API_KEY')
 
     headers = {
@@ -39,7 +50,7 @@ def gerar_resposta(msg):
     data = {
         "model": "nousresearch/deephermes-3-llama-3-8b-preview:free",
         "messages": [
-            {"role": "system", "content": "Você é um agente inteligente de atendimento."},
+            {"role": "system", "content": prompt},
             {"role": "user", "content": msg}
         ]
     }
