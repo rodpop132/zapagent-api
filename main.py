@@ -43,11 +43,12 @@ def responder_por_numero(numero):
     memoria_agentes[numero] = msg
     historico_agentes.setdefault(numero, []).append({"user": msg})
 
-    resposta_json = gerar_resposta(msg, prompt)
-    resposta_texto = resposta_json.json.get("resposta", "")
+    resposta_obj = gerar_resposta(msg, prompt)
+    resposta_data = resposta_obj.get_json()
+    resposta_texto = resposta_data.get("resposta", "")
     historico_agentes[numero].append({"bot": resposta_texto})
 
-    return resposta_json
+    return jsonify(resposta_data)
 
 # Rota para o painel ver histórico e última mensagem
 @app.route('/status/<numero>', methods=['GET'])
