@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import requests
-import os
 
 app = Flask(__name__)
 
@@ -8,11 +7,13 @@ app = Flask(__name__)
 memoria_agentes = {}    # { agent_id ou numero: última mensagem }
 historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
+# Tua chave da OpenRouter (inserida diretamente)
+OPENROUTER_API_KEY = "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"
+
 @app.route('/')
 def home():
     return "ZapAgent IA está online e funcional!"
 
-# Teste GET simples (apenas mensagem)
 @app.route('/responder', methods=['GET'])
 def responder_get():
     msg = request.args.get('msg', '')
@@ -20,7 +21,6 @@ def responder_get():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg)
 
-# Teste POST simples (sem número)
 @app.route('/responder', methods=['POST'])
 def responder_post():
     data = request.get_json()
@@ -30,18 +30,16 @@ def responder_post():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg, prompt)
 
-# POST com número e suporte a agent_id único (multi-agente)
 @app.route('/responder/<numero>', methods=['POST'])
 def responder_por_numero(numero):
     data = request.get_json()
     msg = data.get('msg', '')
     prompt = data.get('prompt', 'Você é um agente inteligente de atendimento.')
-    agent_id = data.get('agent_id', numero)  # se não enviar agent_id, usar o número como fallback
+    agent_id = data.get('agent_id', numero)
 
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
-    # Salvar memória e histórico
     memoria_agentes[agent_id] = msg
     historico_agentes.setdefault(agent_id, []).append({"user": msg})
 
@@ -50,13 +48,11 @@ def responder_por_numero(numero):
     resposta_texto = resposta_data.get("resposta", "")
     historico_agentes[agent_id].append({"bot": resposta_texto})
 
-    # Limitar histórico local (máx. 50 entradas)
     if len(historico_agentes[agent_id]) > 50:
         historico_agentes[agent_id] = historico_agentes[agent_id][-50:]
 
     return jsonify(resposta_data)
 
-# Rota para obter status e histórico do agente
 @app.route('/status/<numero>', methods=['GET'])
 def status_agente(numero):
     agent_id = request.args.get('agent_id', numero)
@@ -68,14 +64,9 @@ def status_agente(numero):
         "conversas": historico[-10:]
     })
 
-# Função central de geração de resposta da IA via OpenRouter
 def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento."):
-    api_key = os.environ.get('OPENROUTER_API_KEY')
-    if not api_key:
-        return jsonify({"resposta": "❌ API KEY não configurada no servidor."}), 500
-
     headers = {
-        "Authorization": f"Bearer {api_key}",
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "https://zapagent-ai-builder.lovable.app",
         "X-Title": "ZapAgent AI"
@@ -104,6 +95,5 @@ def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento.")
 
     return jsonify({"resposta": resposta_texto})
 
-# Iniciar servidor
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
