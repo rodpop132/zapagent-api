@@ -8,7 +8,7 @@ memoria_agentes = {}    # { agent_id ou numero: última mensagem }
 historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
 # Tua chave da OpenRouter (inserida diretamente)
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 
 @app.route('/')
 def home():
