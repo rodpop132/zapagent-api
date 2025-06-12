@@ -5,14 +5,14 @@ import os
 app = Flask(__name__)
 
 # Memória temporária e histórico por agente
-memoria_agentes = {}    # { numero: última mensagem }
-historico_agentes = {}  # { numero: [mensagens trocadas] }
+memoria_agentes = {}    # { agent_id ou numero: última mensagem }
+historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
 @app.route('/')
 def home():
     return "ZapAgent IA está online e funcional!"
 
-# Teste GET simples
+# Teste GET simples (apenas mensagem)
 @app.route('/responder', methods=['GET'])
 def responder_get():
     msg = request.args.get('msg', '')
@@ -30,42 +30,49 @@ def responder_post():
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
     return gerar_resposta(msg, prompt)
 
-# POST com número (usado pelo bot do index.js)
+# POST com número e suporte a agent_id único (multi-agente)
 @app.route('/responder/<numero>', methods=['POST'])
 def responder_por_numero(numero):
     data = request.get_json()
     msg = data.get('msg', '')
     prompt = data.get('prompt', 'Você é um agente inteligente de atendimento.')
+    agent_id = data.get('agent_id', numero)  # se não enviar agent_id, usar o número como fallback
 
     if not msg:
         return jsonify({"resposta": "⚠️ Nenhuma mensagem recebida."})
 
-    memoria_agentes[numero] = msg
-    historico_agentes.setdefault(numero, []).append({"user": msg})
+    # Salvar memória e histórico
+    memoria_agentes[agent_id] = msg
+    historico_agentes.setdefault(agent_id, []).append({"user": msg})
 
     resposta_obj = gerar_resposta(msg, prompt)
     resposta_data = resposta_obj.get_json()
     resposta_texto = resposta_data.get("resposta", "")
-    historico_agentes[numero].append({"bot": resposta_texto})
+    historico_agentes[agent_id].append({"bot": resposta_texto})
+
+    # Limitar histórico local (máx. 50 entradas)
+    if len(historico_agentes[agent_id]) > 50:
+        historico_agentes[agent_id] = historico_agentes[agent_id][-50:]
 
     return jsonify(resposta_data)
 
-# Rota para o painel ver histórico e última mensagem
+# Rota para obter status e histórico do agente
 @app.route('/status/<numero>', methods=['GET'])
 def status_agente(numero):
-    memoria = memoria_agentes.get(numero, '')
-    historico = historico_agentes.get(numero, [])
+    agent_id = request.args.get('agent_id', numero)
+    memoria = memoria_agentes.get(agent_id, '')
+    historico = historico_agentes.get(agent_id, [])
     return jsonify({
         "numero": numero,
         "memoria_ultima_mensagem": memoria,
-        "conversas": historico[-10:]  # últimos 10 diálogos
+        "conversas": historico[-10:]
     })
 
-# Função para gerar resposta da IA com OpenRouter
+# Função central de geração de resposta da IA via OpenRouter
 def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento."):
     api_key = os.environ.get('OPENROUTER_API_KEY')
     if not api_key:
-        return jsonify({"resposta": "❌ Chave da OpenRouter não definida."})
+        return jsonify({"resposta": "❌ API KEY não configurada no servidor."}), 500
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -86,15 +93,17 @@ def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento.")
         response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
         response.raise_for_status()
         resposta_data = response.json()
+
         if "choices" in resposta_data and len(resposta_data["choices"]) > 0:
             resposta_texto = resposta_data["choices"][0]["message"]["content"]
         else:
             resposta_texto = "❌ Erro: Resposta da IA está vazia."
+
     except Exception as e:
         resposta_texto = f"❌ Erro ao obter resposta da IA: {str(e)}"
 
     return jsonify({"resposta": resposta_texto})
 
-# Iniciar o servidor
+# Iniciar servidor
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=3000)
