@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import requests
+import os
 
 app = Flask(__name__)
 
@@ -7,8 +8,8 @@ app = Flask(__name__)
 memoria_agentes = {}    # { agent_id ou numero: última mensagem }
 historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
-# Chave OpenRouter estável (embutida diretamente)
-OPENROUTER_API_KEY = "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"
+# Carrega a chave da OpenRouter de uma variável de ambiente
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
 
 @app.route('/')
 def home():
@@ -65,6 +66,9 @@ def status_agente(numero):
     })
 
 def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento."):
+    if not OPENROUTER_API_KEY:
+        return jsonify({"resposta": "❌ Chave da OpenRouter não encontrada nas variáveis de ambiente."}), 500
+
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
