@@ -7,8 +7,8 @@ app = Flask(__name__)
 memoria_agentes = {}    # { agent_id ou numero: última mensagem }
 historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
-# Tua chave da OpenRouter (inserida diretamente)
-OPENROUTER_API_KEY = "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"
+# Chave OpenRouter estável (embutida diretamente)
+OPENROUTER_API_KEY = "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"
 
 @app.route('/')
 def home():
@@ -73,7 +73,7 @@ def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento.")
     }
 
     data = {
-        "model": "meta-llama/llama-4-maverick:free",
+        "model": "deepseek/deepseek-r1:free",
         "messages": [
             {"role": "system", "content": prompt},
             {"role": "user", "content": msg}
