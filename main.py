@@ -8,7 +8,7 @@ memoria_agentes = {}    # { agent_id ou numero: última mensagem }
 historico_agentes = {}  # { agent_id ou numero: [mensagens trocadas] }
 
 # Tua chave da OpenRouter (inserida diretamente)
-OPENROUTER_API_KEY = "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"
+OPENROUTER_API_KEY = "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"
 
 @app.route('/')
 def home():
@@ -73,7 +73,7 @@ def gerar_resposta(msg, prompt="Você é um agente inteligente de atendimento.")
     }
 
     data = {
-        "model": "nousresearch/deephermes-3-llama-3-8b-preview:free",
+        "model": "meta-llama/llama-4-maverick:free",
         "messages": [
             {"role": "system", "content": prompt},
             {"role": "user", "content": msg}
